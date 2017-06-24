@@ -1,0 +1,35 @@
+
+<!doctype html>
+<html lang="en">
+	<head>
+	    <meta charset="UTF-8">
+	    <meta name="renderer" content="webkit|ie-comp|ie-stand">
+	    <script type="text/javascript">
+	        var pageWidth = 750;
+	        if (/Android (\d+\.\d+)/.test(navigator.userAgent)) {
+	            var version = parseFloat(RegExp.$1);
+	            if (version > 2.3) {
+	                var phoneScale = parseInt(window.screen.width) / pageWidth;
+	                var mtinfo = '<meta name="viewport" content="width=' + pageWidth + ', minimum-scale = ' + phoneScale + ', maximum-scale = ' + phoneScale + ', target-densitydpi=device-dpi">'
+	                document.write(mtinfo);
+	
+	            } else {
+	                document.write('<meta name="viewport" content="width=' + pageWidth + ', target-densitydpi=device-dpi">');
+	            }
+	        } else {
+	            document.write('<meta name="viewport" content="width=' + pageWidth + ', user-scalable=no, target-densitydpi=device-dpi">');
+	        }
+	    </script>
+	    <title>首页</title>
+	  	<!--<meta name="msapplication-tap-highlight" content="no">-->
+	    <meta name = "format-detection" content="telephone = no" />
+	   	<meta name="screen-orientation" content="portrait">
+		<meta name="x5-orientation" content="portrait">
+	</head>
+	<body>
+        <p>这里是首页</p>
+
+        <script src="/jquery-3.2.1.min.js"></script>
+        <script src="/ajax-watcher.js"></script>
+    </body>
+</html>

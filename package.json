@@ -1,0 +1,17 @@
+{
+  "name": "ajax-watcher",
+  "version": "1.0.0",
+  "description": "为移动开发提供一个ajax请求监听的测试工具",
+  "main": "ajax-watcher.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "ajax-test",
+    "mobile",
+    "wechat",
+    "javascript"
+  ],
+  "author": "vldh",
+  "license": "MIT"
+}
