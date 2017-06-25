@@ -78,13 +78,13 @@
         );
         var container = $(
             '<div style="position: fixed; left: 0; right: 0; top: 0; bottom: 0; z-index: 1001; display: none;">\
-                <span style="color: #fff; position: fixed; top: 0; right: 1%;">关闭</span>\
+                <span feature="close-all" style="color: #fff; position: fixed; top: 0; right: 1%;">关闭</span>\
             </div>');
         if (!DOM.mask && !DOM.container) {
             $('body').append(mask, container);
             DOM.mask = mask;
             DOM.container = container;
-            container.find('span').on('click', function () {
+            container.find('span[feature="close-all"]').on('click', function () {
                 DOM.mask.hide();
                 DOM.container.hide();
             });
@@ -99,18 +99,22 @@
                     DOM.container.show();
                 }
                 var content = $(
-                    '<div url='+ ajaxOptions.url +' style="display: inline-block; color: #fff; max-width: 45%; border: 1px solid #fff; padding: 10px;">\
-                        <p>url:  '+ajaxOptions.url+'</p>\
-                        <p>type:  '+ajaxOptions.type+'</p>\
-                        <p>status:  loadding...</p>\
+                    '<div url='+ ajaxOptions.url +' style="display: inline-block; overflow: auto; color: #fff; max-width: 45%; border: 1px solid #fff; padding: 10px; position: relative;">\
+                        <span style="color: #fff; position: absolute; top: 0; right: 5px;">关闭</span>\
+                        <p style="color: #fff;">url:  '+ajaxOptions.url+'</p>\
+                        <p style="color: #fff;">type:  '+ajaxOptions.type+'</p>\
+                        <p style="color: #fff;">status:  loadding...</p>\
                     </div>'
                 );
                 DOM.container.append(content);
+                content.find('span').on('click', function () {
+                    content.remove();
+                });
             }).ajaxComplete(function (e, xhr, settings) {
                 var content = container.find('div[url="'+settings.url+'"]');
                 content.find('p:eq(2)').html('status:  '+xhr.status+'');
                 content.append(
-                    '<p>responseText:  '+xhr.responseText+'</p>'
+                    '<p style="color: #fff;">responseText:  '+xhr.responseText+'</p>'
                 )
                 if (xhr.responseJSON) {
                     //ToDo
