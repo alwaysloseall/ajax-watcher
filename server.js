@@ -16,6 +16,11 @@ http.createServer(function (req, res){
         res.end("{ a: 'a', b: 'b' }");
     }
 
+    else if (req.url == "/getJson1") {
+        res.writeHead(200, { "Content-Type": "text/plain" });
+        res.end("{ name: 'Json1', url: 'getJson1' }");
+    }
+
     // 404错误
     else {
         res.writeHead(404, { "Content-Type": "text/plain" });

@@ -78,12 +78,16 @@
         );
         var container = $(
             '<div style="position: fixed; left: 0; right: 0; top: 0; bottom: 0; z-index: 1001; display: none;">\
-            \
+                <span style="color: #fff; position: fixed; top: 0; right: 1%;">关闭</span>\
             </div>');
         if (!DOM.mask && !DOM.container) {
             $('body').append(mask, container);
             DOM.mask = mask;
             DOM.container = container;
+            container.find('span').on('click', function () {
+                DOM.mask.hide();
+                DOM.container.hide();
+            });
         }
         // DOM.mask.show();
         // DOM.container.show();
@@ -95,22 +99,22 @@
                     DOM.container.show();
                 }
                 var content = $(
-                    '<div style="display: inline-block; margin-right: 20px; color: #fff;">\
+                    '<div url='+ ajaxOptions.url +' style="display: inline-block; color: #fff; max-width: 45%; border: 1px solid #fff; padding: 10px;">\
                         <p>url:  '+ajaxOptions.url+'</p>\
                         <p>type:  '+ajaxOptions.type+'</p>\
                         <p>status:  loadding...</p>\
                     </div>'
                 );
                 DOM.container.append(content);
-                $(document).ajaxComplete(function (e, xhr, settings) {
-                    content.find('p:eq(2)').html('status:  '+xhr.status+'');
-                    content.append(
-                        '<p>responseText:  '+xhr.responseText+'</p>'
-                    )
-                    if (xhr.responseJSON) {
-                        //ToDo
-                    }
-                });
+            }).ajaxComplete(function (e, xhr, settings) {
+                var content = container.find('div[url="'+settings.url+'"]');
+                content.find('p:eq(2)').html('status:  '+xhr.status+'');
+                content.append(
+                    '<p>responseText:  '+xhr.responseText+'</p>'
+                )
+                if (xhr.responseJSON) {
+                    //ToDo
+                }
             });
         })();
 
