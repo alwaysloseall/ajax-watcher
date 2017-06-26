@@ -38,8 +38,10 @@
     ajaxWatcher.close = function () {
         console.log('closing...');
         localStorage.setItem('ajax-watcher', '');
-        DOM.mask.hide();
-        DOM.container.hide();
+        if (DOM.mask && DOM.container) {
+            DOM.mask.hide();
+            DOM.container.hide();
+        }
         openStatus = false;
     };
 
@@ -87,8 +89,8 @@
         );
         var container = $(
             '<div style="position: fixed; left: 0; right: 0; top: 0; bottom: 0; z-index: 1001; display: none; overflow: auto;">\
-                <span feature="close-all" style="color: #fff; position: fixed; top: 0; right: 1%;">关闭</span>\
-                <span feature="clean-all" style="color: #fff; position: fixed; top: 40px; right: 1%;">清除</span>\
+                <span feature="close-all" style="color: #fff; position: fixed; top: 25px; right: 1%;">关闭</span>\
+                <span feature="clean-all" style="color: #fff; position: fixed; top: 80px; right: 1%;">清除</span>\
             </div>');
         if (!DOM.mask && !DOM.container) {
             $('body').append(mask, container);
