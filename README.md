@@ -7,7 +7,8 @@ ajaxWatcher.open(); //默认参数
 
 ajaxWatcher.open({ //可选参数
     jquery: true, //当前版本依赖jQuery
-    keepingTime: 1000 * 60 * 5 //保持监控的持续时间
+    keepingTime: 1000 * 60 * 5, //保持监控的持续时间
+    console: true //是否开启控制台
 });
 ```
 ### API
