@@ -5,7 +5,8 @@
         store = localStorage.getItem('ajax-watcher');
         defultSettings = {
             jquery: true, //是否使用jQuery
-            keepingTime: 1000 * 60 * 5 //调试状态持续时间
+            keepingTime: 1000 * 60 * 5, //调试状态持续时间
+            console: true //是否开启控制台
         },
         settings = {};
     
@@ -63,6 +64,15 @@
         }
     }
 
+    window._consoleExcute = function (str) {
+        try {
+            eval(str);
+            alert('已执行...');
+        } catch (e) {
+            alert(e);
+        }
+    };
+
     var DOM = {};
 
     function jqueryVersion() {
@@ -91,7 +101,34 @@
             '<div style="position: fixed; left: 0; right: 0; top: 0; bottom: 0; z-index: 1001; display: none; overflow: auto;">\
                 <span feature="close-all" style="color: #fff; position: fixed; top: 25px; right: 1%;">关闭</span>\
                 <span feature="clean-all" style="color: #fff; position: fixed; top: 80px; right: 1%;">清除</span>\
-            </div>');
+                <span feature="open-console" style="color: #fff; position: fixed; top: 135px; right: 1%;">控制台</span>\
+            </div>'
+        );
+        var consoleBox = $(
+            '<div style="display: none; z-index: 1002; padding: 10px; border-radius: 20px; border: 5px solid #b4a5a5; width: 80%; height: 30%; background: #fff; position: fixed; top: 35%; left: 10%;">\
+                <span feature="close-console" style="color: #000; position: absolute; top: 0; right: 1%;">关闭</span>\
+                <span feature="excute-console" style="color: #000; position: absolute; top: 65px; right: 1%;">执行</span>\
+                <span style="color: #000; position: absolute; top: 150px; right: 1%;">字号:</span>\
+                <input feature="font-size-console" style="width: 10%; color: #000; position: absolute; top: 200px; right: 1%; type="text" value="46"/>\
+                <textarea style="height: 100%; width: 80%; font-size: 46px;"/>\
+            </div>'
+        );
+        container.append(consoleBox);
+        container.find('span[feature="open-console"]').on('click', function () {
+            if (!settings.console) {
+                return alert('未开启控制台!');
+            }
+            consoleBox.show();
+        });
+        consoleBox.find('span[feature="close-console"]').on('click', function () {
+            consoleBox.hide();
+        });
+        consoleBox.find('span[feature="excute-console"]').on('click', function () {
+            window._consoleExcute(consoleBox.find('textarea').val());
+        }.bind(this));
+        consoleBox.find('input[feature="font-size-console"]').on('input', function () {
+            consoleBox.find('textarea').css('font-size', consoleBox.find('input[feature="font-size-console"]').val() + 'px');
+        });
         if (!DOM.mask && !DOM.container) {
             $('body').append(mask, container);
             DOM.mask = mask;
@@ -104,11 +141,9 @@
                 container.find('.ajax-watcher-content').remove();
             });
         }
-        // DOM.mask.show();
-        // DOM.container.show();
 
         (function () {
-            $(document).ajaxSend(function (e, jqXHR, ajaxOptions) {               
+            $(document).ajaxSend(function (e, jqXHR, ajaxOptions) {
                 if (openStatus) {
                     DOM.mask.show();
                     DOM.container.show();
@@ -119,8 +154,9 @@
                 var content = $(
                     '<div class="ajax-watcher-content" url='+ ajaxOptions.url +' style="display: inline-block; overflow: auto; color: #fff; max-width: 45%; border: 1px solid #fff; padding: 10px; position: relative; height: 40%; word-wrap: break-word; word-break: normal;">\
                         <span style="color: #fff; position: absolute; top: 0; right: 5px;">关闭</span>\
-                        <p style="color: #fff;">url:  '+ajaxOptions.url+'</p>\
+                        <p style="color: #fff;">url:</br>'+ajaxOptions.url+'</p>\
                         <p style="color: #fff;">type:  '+ajaxOptions.type+'</p>\
+                        <p style="color: #fff;">params:</br>'+ajaxOptions.data.replace(/\&/g, '</br>')+'</p>\
                         <p style="color: #fff;">status:  loadding...</p>\
                     </div>'
                 );
@@ -130,7 +166,7 @@
                 });
             }).ajaxComplete(function (e, xhr, settings) {             
                 var content = container.find('div[url="'+settings.url+'"]');
-                content.find('p:eq(2)').html('status:  '+xhr.status+'');
+                content.find('p:eq(3)').html('status:  '+xhr.status+'');
                 var json = $('<div style="color: #fff;"></div>');
                 if (xhr.responseJSON) {
                     json.JSONView(xhr.responseJSON);
