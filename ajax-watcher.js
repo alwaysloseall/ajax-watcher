@@ -19,7 +19,6 @@
 
     //打开调试
     ajaxWatcher.open = function (options) {
-        console.log('opening...');
         if (options) {
             if ('object' != typeof options) { throw new Error('options必须是一个对象'); }
             for (var key in options) {
@@ -42,7 +41,6 @@
 
     //关闭调试
     ajaxWatcher.close = function () {
-        console.log('closing...');
         localStorage.setItem('ajax-watcher', '');
         if (DOM.mask && DOM.container) {
             DOM.mask.hide();
@@ -71,10 +69,9 @@
 
     window._consoleExcute = function (str) {
         try {
-            eval(str);
-            alert('已执行...');
+            $('.ajax-watcher-output').append('<p>' + eval(str) + '</p>');
         } catch (e) {
-            alert(e);
+            $('.ajax-watcher-output').append('<p style="color: #f00">' + e.toString() + '</p>');
         }
     };
 
@@ -118,13 +115,13 @@
         ');
         var container = $(
             '<div style="position: fixed; left: 0; right: 0; top: 0; bottom: 0; z-index: 1001; display: none; overflow: auto;">\
-                <span feature="close-all" style="color: #fff; position: fixed; top: 25px; right: 1%;">关闭</span>\
-                <span feature="clean-all" style="color: #fff; position: fixed; top: 80px; right: 1%;">清除</span>\
-                <span feature="open-console" style="color: #fff; position: fixed; top: 135px; right: 1%;">控制台</span>\
+                <span feature="close-all" style="color: #fff; position: fixed; top: 40px; right: 1%;">关闭</span>\
+                <span feature="clean-all" style="color: #fff; position: fixed; top: 95px; right: 1%;">清除</span>\
+                <span feature="open-console" style="color: #fff; position: fixed; top: 150px; right: 1%;">控制台</span>\
             </div>'
         );
         var consoleBox = $(
-            '<div style="display: none; z-index: 1002; padding: 10px; border-radius: 20px; border: 5px solid #b4a5a5; width: 80%; height: 30%; background: #fff; position: fixed; top: 35%; left: 10%;">\
+            '<div style="display: none; z-index: 1002; padding: 10px; border-radius: 20px; border: 5px solid #b4a5a5; width: 80%; height: 35%; background: #fff; position: fixed; top: 50%; left: 10%;">\
                 <span feature="close-console" style="color: #000; position: absolute; top: 0; right: 1%;">关闭</span>\
                 <span feature="excute-console" style="color: #000; position: absolute; top: 65px; right: 1%;">执行</span>\
                 <span style="color: #000; position: absolute; top: 150px; right: 1%;">字号:</span>\
@@ -132,15 +129,22 @@
                 <textarea style="height: 100%; width: 80%; font-size: 46px;"/>\
             </div>'
         );
-        container.append(consoleBox);
+        var outputBox = $(
+            '<div class="ajax-watcher-output" style="display: none; overflow: auto; z-index: 1003; padding: 10px; border-radius: 20px; border: 5px solid #b4a5a5; width: 80%; height: 35%; background: #fff; position: fixed; top: 10%; left: 10%;">\
+                <div>输出：<span feature="clean-output" style="display: inline-block; float: right; color: #5677fc;">清空</span></div>\
+            </div>'
+        );
+        container.append(consoleBox, outputBox);
         container.find('span[feature="open-console"]').on('click', function () {
             if (!settings.console) {
                 return alert('未开启控制台!');
             }
             consoleBox.show();
+            outputBox.show();
         });
         consoleBox.find('span[feature="close-console"]').on('click', function () {
             consoleBox.hide();
+            outputBox.hide();
         });
         consoleBox.find('span[feature="excute-console"]').on('click', function () {
             window._consoleExcute(consoleBox.find('textarea').val());
@@ -167,58 +171,66 @@
                 DOM.manage.hide();
             });
             if (settings.autoShow) {
+                DOM.mask.show();    
+                DOM.container.show();
                 DOM.manage.hide();
             } else {
                 DOM.mask.hide();    
                 DOM.container.hide();
                 DOM.manage.show();
             }
+            (function () {
+                $(document).ajaxSend(function (e, jqXHR, ajaxOptions) {
+                    if (openStatus && settings.autoShow) {
+                        DOM.mask.show();
+                        DOM.container.show();
+                    }
+                    if (container.find('div[url="'+ajaxOptions.url+'"]').length) {
+                        container.find('div[url="'+ajaxOptions.url+'"]').remove();
+                    }
+                    var content = $(
+                        '<div class="ajax-watcher-content" url='+ ajaxOptions.url +' style="display: inline-block; overflow: auto; color: #fff; max-width: 45%; border: 1px solid #fff; padding: 10px; position: relative; height: 40%; word-wrap: break-word; word-break: normal;">\
+                            <span style="color: #fff; position: absolute; top: 0; right: 5px;">关闭</span>\
+                            <p style="color: #fff;">url:</br>'+ajaxOptions.url+'</p>\
+                            <p style="color: #fff;">type:  '+ajaxOptions.type+'</p>\
+                            <p style="color: #fff;">params:</br>'+ajaxOptions.data.replace(/\&/g, '</br>')+'</p>\
+                            <p style="color: #fff;">status:  loadding...</p>\
+                        </div>'
+                    );
+                    DOM.container.append(content);
+                    content.children('span').on('click', function () {
+                        content.remove();
+                    });
+                }).ajaxComplete(function (e, xhr, settings) {             
+                    var content = container.find('div[url="'+settings.url+'"]');
+                    content.find('p:eq(3)').html('status:  '+xhr.status+'');
+                    var json = $('<div style="color: #fff;"></div>');
+                    if (xhr.responseJSON) {
+                        json.JSONView(xhr.responseJSON);
+                        content.append('<p style="color: #fff;">response:  </p>');
+                        content.append(json);
+                    } else {
+                        content.append(
+                            '<p style="color: #fff;">responseText:  '+xhr.responseText+'</p>'
+                        );
+                    }
+                });
+                if (settings.console) {
+                    outputBox.find('span[feature="clean-output"]').on('click', function () {
+                        outputBox.find('p').remove();
+                    });
+                    window.onerror = function (message, source, lineno, colno, error) {
+                        outputBox.append('<p style="color: #f00">' + message + '(at: ' + source + lineno + ':行' + colno + ':列' + ')</p>');
+                    };
+                }
+            })();
         } else {
             DOM.mask.show();
             DOM.container.show();
             DOM.manage.hide();
         }
 
-        (function () {
-            $(document).ajaxSend(function (e, jqXHR, ajaxOptions) {
-                if (openStatus && settings.autoShow) {
-                    DOM.mask.show();
-                    DOM.container.show();
-                }
-                if (container.find('div[url="'+ajaxOptions.url+'"]').length) {
-                    container.find('div[url="'+ajaxOptions.url+'"]').remove();
-                }
-                var content = $(
-                    '<div class="ajax-watcher-content" url='+ ajaxOptions.url +' style="display: inline-block; overflow: auto; color: #fff; max-width: 45%; border: 1px solid #fff; padding: 10px; position: relative; height: 40%; word-wrap: break-word; word-break: normal;">\
-                        <span style="color: #fff; position: absolute; top: 0; right: 5px;">关闭</span>\
-                        <p style="color: #fff;">url:</br>'+ajaxOptions.url+'</p>\
-                        <p style="color: #fff;">type:  '+ajaxOptions.type+'</p>\
-                        <p style="color: #fff;">params:</br>'+ajaxOptions.data.replace(/\&/g, '</br>')+'</p>\
-                        <p style="color: #fff;">status:  loadding...</p>\
-                    </div>'
-                );
-                DOM.container.append(content);
-                content.children('span').on('click', function () {
-                    content.remove();
-                });
-            }).ajaxComplete(function (e, xhr, settings) {             
-                var content = container.find('div[url="'+settings.url+'"]');
-                content.find('p:eq(3)').html('status:  '+xhr.status+'');
-                var json = $('<div style="color: #fff;"></div>');
-                if (xhr.responseJSON) {
-                    json.JSONView(xhr.responseJSON);
-                    content.append('<p style="color: #fff;">response:  </p>');
-                    content.append(json);
-                } else {
-                    content.append(
-                        '<p style="color: #fff;">responseText:  '+xhr.responseText+'</p>'
-                    );
-                }
-                if (xhr.responseJSON) {
-                    //ToDo
-                }
-            });
-        })();
+        
 
     }
 
@@ -226,7 +238,6 @@
         store = JSON.parse(store);
         if (Date.now() < store.openTime + store.settings.keepingTime) {
             init();
-            console.log('opening...');
             setTimeout(function () {
                 ajaxWatcher.close();
             }, store.openTime + store.settings.keepingTime - Date.now());
