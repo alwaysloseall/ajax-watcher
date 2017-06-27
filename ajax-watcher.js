@@ -6,7 +6,8 @@
         defultSettings = {
             jquery: true, //是否使用jQuery
             keepingTime: 1000 * 60 * 5, //调试状态持续时间
-            console: true //是否开启控制台
+            console: true, //是否开启控制台
+            autoShow: true
         },
         settings = {};
     
@@ -24,6 +25,10 @@
             for (var key in options) {
                 settings[key] = options[key];
             }
+            if ('boolean' != typeof settings.jquery) { throw new Error('参数jquery类型错误，请适用boolean类型的值'); }
+            if ('boolean' != typeof settings.console) { throw new Error('参数console类型错误，请适用boolean类型的值'); }
+            if ('boolean' != typeof settings.autoShow) { throw new Error('参数autoShow类型错误，请适用boolean类型的值'); }
+            if ('number' != typeof parseInt(settings.keepingTime)) { throw new Error('参数keepingTime类型错误，请适用number类型的值'); }
         }
         localStorage.setItem('ajax-watcher', JSON.stringify({
             openTime: Date.now(),
@@ -97,6 +102,20 @@
                 font-size: 28px;">\
             </div>'
         );
+        var manage = $('\
+            <div style="position: fixed; right: 5%; top: 5%; z-index: 1000">\
+                <span style="width: 70px;\
+                    line-height: 70px;\
+                    text-align: center;\
+                    height: 70px;\
+                    background: rgba(41, 176, 217, 0.5);\
+                    display: block;\
+                    border: 1px solid rgba(41, 176, 217, 0.5);\
+                    border-radius: 50%;\
+                    font-size: 28px;" feature="open-watcher"\
+                >open</span>\
+            </div>\
+        ');
         var container = $(
             '<div style="position: fixed; left: 0; right: 0; top: 0; bottom: 0; z-index: 1001; display: none; overflow: auto;">\
                 <span feature="close-all" style="color: #fff; position: fixed; top: 25px; right: 1%;">关闭</span>\
@@ -129,22 +148,40 @@
         consoleBox.find('input[feature="font-size-console"]').on('input', function () {
             consoleBox.find('textarea').css('font-size', consoleBox.find('input[feature="font-size-console"]').val() + 'px');
         });
-        if (!DOM.mask && !DOM.container) {
-            $('body').append(mask, container);
+        if (!DOM.mask && !DOM.container && !DOM.manage) {
+            $('body').append(mask, container, manage);
             DOM.mask = mask;
             DOM.container = container;
+            DOM.manage = manage;
             container.find('span[feature="close-all"]').on('click', function () {
                 DOM.mask.hide();
                 DOM.container.hide();
+                DOM.manage.show();
             });
             container.find('span[feature="clean-all"]').on('click', function () {
                 container.find('.ajax-watcher-content').remove();
             });
+            manage.find('span[feature="open-watcher"]').on('click', function () {
+                DOM.mask.show();
+                DOM.container.show();
+                DOM.manage.hide();
+            });
+            if (settings.autoShow) {
+                DOM.manage.hide();
+            } else {
+                DOM.mask.hide();    
+                DOM.container.hide();
+                DOM.manage.show();
+            }
+        } else {
+            DOM.mask.show();
+            DOM.container.show();
+            DOM.manage.hide();
         }
 
         (function () {
             $(document).ajaxSend(function (e, jqXHR, ajaxOptions) {
-                if (openStatus) {
+                if (openStatus && settings.autoShow) {
                     DOM.mask.show();
                     DOM.container.show();
                 }
