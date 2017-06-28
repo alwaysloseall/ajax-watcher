@@ -49,6 +49,7 @@
         openStatus = false;
     };
 
+    //全局初始化
     function init() {
         if (openStatus) { return; }
         openStatus = true;
@@ -67,16 +68,93 @@
         }
     }
 
+    //控制台执行流程，重写console
+    function initConsoleExcute () {
+        window._consoleExcuteResult = '';
+        var _log = console.log,
+            tempFunction, color,
+            $output = $('.ajax-watcher-output');
+
+        for (var key in console) {
+            if (key.match(/log|debug|error|info|warn|dir/)) {
+                tempFunction = console[key];
+                switch (key) {
+                    case 'log':
+                        color = '#1F2D3D';
+                        break;
+                    case 'debug':
+                        color = '#1D8CE0';
+                        break;
+                    case 'error':
+                        color = '#FF4949';
+                        break;
+                    case 'info':
+                        color = 'blue';
+                        break;
+                    case 'warn':
+                        color = '#F7BA2A';
+                        break;
+                    case 'dir':
+                        color = '#58B7FF';
+                        break;
+                    default:
+                        color = '#1F2D3D';
+                        break;
+                }
+                (function (color) {
+                    console[key] = function () {
+                        var result = '';
+                        for (var i = 0; i < arguments.length; i ++) {
+                            if ('object' == typeof arguments[i]) {
+                                try {
+                                    $('<p style="color: ' + color + '"></p>').JSONView(arguments[i]).appendTo($output);
+                                } catch (e) {
+                                    $output.append('<p style="color: ' + color + '">' + arguments[i].toString() + '</p>');
+                                }
+                            } else {
+                                result += arguments[i];
+                            }
+                        }
+                        $output.append('<p style="color: ' + color + '">' + result + '</p>');
+                        tempFunction.apply(console, arguments);
+                    }.bind(window);
+                })(color);
+            }
+        }
+    }
+
+    //控制台执行方法，暴露到外部
+    //bty，这里放在外部是为了在执行时变量的作用域在window上，从而不能访问到内部的变量。
+    //开始的实现是用eval所以这么做的，现在换成append script，其实可以换成内部定义调用时bind(wind)
     window._consoleExcute = function (str) {
+        $('script[feature="consoleExcute"]').remove();
+        var $output = $('.ajax-watcher-output');
         try {
-            $('.ajax-watcher-output').append('<p>' + eval(str) + '</p>');
+            var defineVar = str.match(/var\s+([a-zA-Z_][a-zA-Z0-9_]*)/);
+            if (defineVar && defineVar.length == 2) {
+                $('body').append('<script feature="consoleExcute">' + str + '</script>');
+                // window._consoleExcuteResult = eval(defineVar[1]);
+                window._consoleExcuteResult = defineVar.input;
+            } else {
+                $('body').append('<script feature="consoleExcute">window._consoleExcuteResult = (' + str + ')</script>');                
+            }
+            if ('object' == typeof window._consoleExcuteResult) {
+                try {
+                    $('<p></p>').JSONView(window._consoleExcuteResult).appendTo($output);
+                } catch (e) {
+                    $output.append('<p style="">' + window._consoleExcuteResult + '</p>');
+                }
+            } else {
+                $($output).append('<p style="">' + window._consoleExcuteResult + '</p>');
+            }
         } catch (e) {
-            $('.ajax-watcher-output').append('<p style="color: #f00">' + e.toString() + '</p>');
+            $($output).append('<p style="color: #f00">' + e.toString() + '</p>');
         }
     };
 
     var DOM = {};
 
+    //鸡块瑞版本的初始化
     function jqueryVersion() {
         $('head').append(
             '<style>\
@@ -216,6 +294,7 @@
                     }
                 });
                 if (settings.console) {
+                    initConsoleExcute();
                     outputBox.find('span[feature="clean-output"]').on('click', function () {
                         outputBox.find('p').remove();
                     });
@@ -234,6 +313,7 @@
 
     }
 
+    //有存储配置时直接初始化
     if (store) {
         store = JSON.parse(store);
         if (Date.now() < store.openTime + store.settings.keepingTime) {
@@ -241,9 +321,13 @@
             setTimeout(function () {
                 ajaxWatcher.close();
             }, store.openTime + store.settings.keepingTime - Date.now());
+        } else {
+            ajaxWatcher.close();
         }
     }
 
+    //外部引用的逻辑
+    //JsonView，鸡块瑞插件
     function initJsonView() {
         ! function(e) { var t, n, r, l, o; return o = ["object", "array", "number", "string", "boolean", "null"], r = function() {
             function t(e) { null == e && (e = {}), this.options = e } return t.prototype.htmlEncode = function(e) { return null !== e ? e.toString().replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : "" }, t.prototype.jsString = function(e) { return e = JSON.stringify(e).slice(1, -1), this.htmlEncode(e) }, t.prototype.decorateWithSpan = function(e, t) { return '<span class="' + t + '">' + this.htmlEncode(e) + "</span>" }, t.prototype.valueToHTML = function(t, n) { var r; if(null == n && (n = 0), r = Object.prototype.toString.call(t).match(/\s(.+)]/)[1].toLowerCase(), this.options.strict && !e.inArray(r, o)) throw new Error("" + r + " is not a valid JSON value type"); return this["" + r + "ToHTML"].call(this, t, n) }, t.prototype.nullToHTML = function(e) { return this.decorateWithSpan("null", "null") }, t.prototype.undefinedToHTML = function() { return this.decorateWithSpan("undefined", "undefined") }, t.prototype.numberToHTML = function(e) { return this.decorateWithSpan(e, "num") }, t.prototype.stringToHTML = function(e) { var t, n; return /^(http|https|file):\/\/[^\s]+$/i.test(e) ? '<a href="' + this.htmlEncode(e) + '"><span class="q">"</span>' + this.jsString(e) + '<span class="q">"</span></a>' : (t = "", e = this.jsString(e), this.options.nl2br && (n = /([^>\\r\\n]?)(\\r\\n|\\n\\r|\\r|\\n)/g, n.test(e) && (t = " multiline", e = (e + "").replace(n, "$1<br />"))), '<span class="string' + t + '">"' + e + '"</span>') }, t.prototype.booleanToHTML = function(e) { return this.decorateWithSpan(e, "bool") }, t.prototype.arrayToHTML = function(e, t) { var n, r, l, o, i, s, a, p; for(null == t && (t = 0), r = !1, i = "", o = e.length, l = a = 0, p = e.length; p > a; l = ++a) s = e[l], r = !0, i += "<li>" + this.valueToHTML(s, t + 1), o > 1 && (i += ","), i += "</li>", o--; return r ? (n = 0 === t ? "" : " collapsible", '[<ul class="array level' + t + n + '">' + i + "</ul>]") : "[ ]" }, t.prototype.objectToHTML = function(e, t) { var n, r, l, o, i, s, a;
