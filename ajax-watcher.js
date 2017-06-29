@@ -101,7 +101,7 @@
                         color = '#1F2D3D';
                         break;
                 }
-                (function (color) {
+                (function (color, tempFunction) {
                     console[key] = function () {
                         var result = '';
                         for (var i = 0; i < arguments.length; i ++) {
@@ -118,7 +118,7 @@
                         $output.append('<p style="color: ' + color + '">' + result + '</p>');
                         tempFunction.apply(console, arguments);
                     }.bind(window);
-                })(color);
+                })(color, tempFunction);
             }
         }
     }
