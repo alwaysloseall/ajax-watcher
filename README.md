@@ -12,8 +12,8 @@ ajaxWatcher.open({ //可选参数
     autoShow: true //是否自动显示
 });
 ```
-![图片1](img/console_img_1.PNG)
-![图片2](img/console_img_2.PNG)
+![图片1](img/console_img_1.PNG=375x667)
+![图片2](img/console_img_2.PNG=375x667)
 ### API
 * ``` ajaxWatcher.close(); ``` 关闭调试
 
