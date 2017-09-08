@@ -3,10 +3,14 @@
 
 ## Getting Start
 ```javascript
+import ajaxWatcher from './assets/ajax-watcher'
+Vue.use(ajaxWatcher)
+
+Vue.prototype.$http = ajaxWatcher.$http
+
 ajaxWatcher.open(); //默认参数
 
 ajaxWatcher.open({ //可选参数
-    jquery: true, //当前版本依赖jQuery
     keepingTime: 1000 * 60 * 5, //保持监控的持续时间
     console: true //是否开启控制台
     autoShow: true //是否自动显示
@@ -14,7 +18,9 @@ ajaxWatcher.open({ //可选参数
 ```
 ### API
 * ``` ajaxWatcher.close(); ``` 关闭调试
-
+* ``` ajaxWatcher.get(url:string, [data:object|string]).then(successCallback:function).catch(errorCallback:function) ``` 发送get请求
+* ``` ajaxWatcher.post(url:string, [data:object|string]).then(successCallback:function).catch(errorCallback:function) ``` 发送post请求
+* ``` ajaxWatcher.all(promiseArray:array) ``` 
 ## Q&A
 #### Q: 这个调试工具适用于什么场景
 >A: 适用于已上线的移动端项目，解决不便于调试的问题，主要可以解决调试代码兼容性，了解报错信息
