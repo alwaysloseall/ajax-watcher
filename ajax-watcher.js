@@ -1,113 +1,56 @@
-// version: 2.0.0
-// src/ajax-watcher.js
+(function (window, document, undefined) {
 
-import $ from 'jquery'
+    var ajaxWatcher = {},
+        openStatus = false,
+        store = localStorage.getItem('ajax-watcher'),
+        defultSettings = {
+            jquery: true, //是否使用jQuery
+            keepingTime: 1000 * 60 * 5, //调试状态持续时间
+            console: true, //是否开启控制台
+            autoShow: true
+        },
+        settings = {};
+    
+    (function () {
+        for (var key in defultSettings) {
+            settings[key] = defultSettings[key];
+        }
+    })();
 
-const AjaxWatcher = {}
-
-const ajax = (method, url, data)=> {
-    const xhr = new XMLHttpRequest()
-    return new Promise(function (resolve, reject) {
-        xhr.onreadystatechange = function () {
-            if (xhr.readyState === 4) {
-                const res = {}
-                res.status = xhr.status
-                res.statusText = xhr.statusText
-                res.headers = {}
-                res.xhr = xhr
-                ;['date', 'etag', 'connection', 'x-powered-by', 'content-length', 'content-type'].forEach(function(key) {
-                    res.headers[key] = xhr.getResponseHeader(key)
-                }, this)
-                try {
-                    res.data = JSON.parse(xhr.responseText)
-                }catch (e) {
-                    res.data = xhr.responseText
-                }
-                if (xhr.status === 200) {
-                    resolve(res)
-                } else {
-                    reject(res)
-				}
-				$http.ajaxComplete(null, xhr, {
-					url: url,
-					data: data,
-					type: method
-				})
+    //打开调试
+    ajaxWatcher.open = function (options) {
+        if (options) {
+            if ('object' != typeof options) { throw new Error('options必须是一个对象'); }
+            for (var key in options) {
+                settings[key] = options[key];
             }
-        };
-        xhr.open(method, url)
-		xhr.send(data)
-		$http.ajaxSend(null, xhr, {
-			url: url,
-			data: '',
-			type: method
-		})
-    });
-}
-
-const $http = {
-	ajax: ajax,
-	post: ajax.bind(this, 'post'),
-	get: ajax.bind(this, 'get'),
-	all () {
-		return Promise.all(arguments[0])
-	},
-	race() {
-        return Promise.race(arguments[0])
-    },
-}
-
-$http.ajaxSend = ()=> {}
-$http.ajaxComplete = ()=> {}
-
-// 避免重复 install，设立 flag
-AjaxWatcher.installed = false
-AjaxWatcher.install = Vue => {
-	if (AjaxWatcher.installed) {
-	return
-	}
-	// install 的具体逻辑
-	console.log('111')
-	AjaxWatcher.$http = $http
-
-	let settings,
-		openStatus = false,
-		store = localStorage.getItem('ajax-watcher');
-
-	//打开调试
-	AjaxWatcher.open = (
-		{
-			keepingTime = 1000 * 60 * 5, //调试状态持续时间
-			console = true, //是否开启控制台
-			autoShow = true
-		} = {}
-	) => {
-		settings = {
-			keepingTime: keepingTime,
-			console: console,
-			autoShow: autoShow
-		}
-		localStorage.setItem('ajax-watcher', JSON.stringify({
-			openTime: Date.now(),
-			settings: settings
-		}));
-		init();
+            if ('boolean' != typeof settings.jquery) { throw new Error('参数jquery类型错误，请适用boolean类型的值'); }
+            if ('boolean' != typeof settings.console) { throw new Error('参数console类型错误，请适用boolean类型的值'); }
+            if ('boolean' != typeof settings.autoShow) { throw new Error('参数autoShow类型错误，请适用boolean类型的值'); }
+            if ('number' != typeof parseInt(settings.keepingTime)) { throw new Error('参数keepingTime类型错误，请适用number类型的值'); }
+        }
+        localStorage.setItem('ajax-watcher', JSON.stringify({
+            openTime: Date.now(),
+            settings: settings
+        }));
+        init();
         setTimeout(function () {
-            AjaxWatcher.close();
+            ajaxWatcher.close();
         }, settings.keepingTime);
-	}
-	//关闭调试
-	AjaxWatcher.close = function () {
-		localStorage.setItem('ajax-watcher', '');
+    };
+
+    //关闭调试
+    ajaxWatcher.close = function () {
+        localStorage.setItem('ajax-watcher', '');
         if (DOM.mask && DOM.container) {
             DOM.mask.hide();
             DOM.container.hide();
         }
         openStatus = false;
-	};
+    };
 
-	 //全局初始化
-	 function init() {
+    //全局初始化
+    function init() {
         if (openStatus) { return; }
         openStatus = true;
         var template = '<div></div>';
@@ -116,11 +59,16 @@ AjaxWatcher.install = Vue => {
             settings = store.settings;
         }
 
-		try {
-			'undefined' != typeof $ ? jqueryVersion() : (function() {throw new Error('没有找到$变量，请正确引入jQuery')})();
-		} catch (e) {
-			throw new Error(e);
-		}
+        if (!settings.jquery) {
+            throw new Error('现在的版本必须依赖jQuery！');
+        } else {
+            try {
+                'undefined' != typeof $ ? jqueryVersion() : (function() {throw new Error('没有找到$变量，请正确引入jQuery')})();
+            } catch (e) {
+                throw new Error(e);
+            }
+            // jqueryVersion()
+        }
     }
 
     //控制台执行流程，重写console
@@ -218,7 +166,7 @@ AjaxWatcher.install = Vue => {
                 }\
             </style>'
         )
-		initJsonView.call(window);
+        initJsonView.call(window);
         var mask = $('<div style="position: fixed;\
                 display: none;\
                 left: 0;\
@@ -313,14 +261,14 @@ AjaxWatcher.install = Vue => {
                 DOM.manage.show();
             }
             (function () {
-				let ajaxSendCallback = (e, jqXHR, ajaxOptions)=>{
-					if (openStatus && settings.autoShow) {
+                $(document).ajaxSend(function (e, jqXHR, ajaxOptions) {
+                    if (openStatus && settings.autoShow) {
                         DOM.mask.show();
                         DOM.container.show();
                     }
                     if (container.find('div[url="'+ajaxOptions.url+'"]').length) {
                         container.find('div[url="'+ajaxOptions.url+'"]').remove();
-					}
+                    }
                     var content = $(
                         '<div class="ajax-watcher-content" url='+ ajaxOptions.url +' style="display: inline-block; overflow: auto; color: #fff; max-width: 45%; border: 1px solid #fff; padding: 10px; position: relative; height: 40%; word-wrap: break-word; word-break: normal;">\
                             <span style="color: #fff; position: absolute; top: 0; right: 5px;">关闭</span>\
@@ -336,9 +284,8 @@ AjaxWatcher.install = Vue => {
                     content.children('span').on('click', function () {
                         content.remove();
                     });
-				}
-				let ajaxCompleteCallback = (e, xhr, settings)=> {
-					var content = container.find('div[url="'+settings.url+'"]');
+                }).ajaxComplete(function (e, xhr, settings) {             
+                    var content = container.find('div[url="'+settings.url+'"]');
                     content.find('p:eq(3)').html('status:  '+xhr.status+'');
                     var json = $('<div style="color: #fff;"></div>');
                     if (xhr.responseJSON) {
@@ -350,10 +297,7 @@ AjaxWatcher.install = Vue => {
                             '<p style="color: #fff;">responseText:  '+xhr.responseText+'</p>'
                         );
                     }
-				}
-				$(document).ajaxSend(ajaxSendCallback).ajaxComplete(ajaxCompleteCallback);
-				$http.ajaxSend = ajaxSendCallback;
-				$http.ajaxComplete = ajaxCompleteCallback;
+                });
                 if (settings.console) {
                     initConsoleExcute();
                     outputBox.find('span[feature="clean-output"]').on('click', function () {
@@ -371,33 +315,31 @@ AjaxWatcher.install = Vue => {
         }
     }
 
-	if (store) {
+    //原生版本的初始化
+    function nativeVersion() {
+
+    }
+
+    //有存储配置时直接初始化
+    if (store) {
         store = JSON.parse(store);
         if (Date.now() < store.openTime + store.settings.keepingTime) {
             init();
             setTimeout(function () {
-                AjaxWatcher.close();
+                ajaxWatcher.close();
             }, store.openTime + store.settings.keepingTime - Date.now());
         } else {
-            AjaxWatcher.close();
+            ajaxWatcher.close();
         }
     }
 
     //外部引用的逻辑
     //JsonView，鸡块瑞插件
-    function initJsonView () {
+    function initJsonView() {
         ! function(e) { var t, n, r, l, o; return o = ["object", "array", "number", "string", "boolean", "null"], r = function() {
             function t(e) { null == e && (e = {}), this.options = e } return t.prototype.htmlEncode = function(e) { return null !== e ? e.toString().replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : "" }, t.prototype.jsString = function(e) { return e = JSON.stringify(e).slice(1, -1), this.htmlEncode(e) }, t.prototype.decorateWithSpan = function(e, t) { return '<span class="' + t + '">' + this.htmlEncode(e) + "</span>" }, t.prototype.valueToHTML = function(t, n) { var r; if(null == n && (n = 0), r = Object.prototype.toString.call(t).match(/\s(.+)]/)[1].toLowerCase(), this.options.strict && !e.inArray(r, o)) throw new Error("" + r + " is not a valid JSON value type"); return this["" + r + "ToHTML"].call(this, t, n) }, t.prototype.nullToHTML = function(e) { return this.decorateWithSpan("null", "null") }, t.prototype.undefinedToHTML = function() { return this.decorateWithSpan("undefined", "undefined") }, t.prototype.numberToHTML = function(e) { return this.decorateWithSpan(e, "num") }, t.prototype.stringToHTML = function(e) { var t, n; return /^(http|https|file):\/\/[^\s]+$/i.test(e) ? '<a href="' + this.htmlEncode(e) + '"><span class="q">"</span>' + this.jsString(e) + '<span class="q">"</span></a>' : (t = "", e = this.jsString(e), this.options.nl2br && (n = /([^>\\r\\n]?)(\\r\\n|\\n\\r|\\r|\\n)/g, n.test(e) && (t = " multiline", e = (e + "").replace(n, "$1<br />"))), '<span class="string' + t + '">"' + e + '"</span>') }, t.prototype.booleanToHTML = function(e) { return this.decorateWithSpan(e, "bool") }, t.prototype.arrayToHTML = function(e, t) { var n, r, l, o, i, s, a, p; for(null == t && (t = 0), r = !1, i = "", o = e.length, l = a = 0, p = e.length; p > a; l = ++a) s = e[l], r = !0, i += "<li>" + this.valueToHTML(s, t + 1), o > 1 && (i += ","), i += "</li>", o--; return r ? (n = 0 === t ? "" : " collapsible", '[<ul class="array level' + t + n + '">' + i + "</ul>]") : "[ ]" }, t.prototype.objectToHTML = function(e, t) { var n, r, l, o, i, s, a;
             null == t && (t = 0), r = !1, i = "", o = 0; for(s in e) o++; for(s in e) a = e[s], r = !0, l = this.options.escape ? this.jsString(s) : s, i += '<li><a class="prop" href="javascript:;"><span class="q">"</span>' + l + '<span class="q">"</span></a>: ' + this.valueToHTML(a, t + 1), o > 1 && (i += ","), i += "</li>", o--; return r ? (n = 0 === t ? "" : " collapsible", '{<ul class="obj level' + t + n + '">' + i + "</ul>}") : "{ }" }, t.prototype.jsonToHTML = function(e) { return '<div class="jsonview">' + this.valueToHTML(e) + "</div>" }, t }(), "undefined" != typeof module && null !== module && (/*module.exports = r*/true), n = function() {
-        function e() {} return e.bindEvent = function(e, t) { var n; return e.firstChild.addEventListener("click", function(e) { return function(n) { return e.toggle(n.target.parentNode.firstChild, t) } }(this)), n = document.createElement("div"), n.className = "collapser", n.innerHTML = t.collapsed ? "+" : "-", n.addEventListener("click", function(e) { return function(n) { return e.toggle(n.target, t) } }(this)), e.insertBefore(n, e.firstChild), t.collapsed ? this.collapse(n) : void 0 }, e.expand = function(e) { var t, n; return n = this.collapseTarget(e), "" !== n.style.display ? (t = n.parentNode.getElementsByClassName("ellipsis")[0], n.parentNode.removeChild(t), n.style.display = "", e.innerHTML = "-") : void 0 }, e.collapse = function(e) { var t, n; return n = this.collapseTarget(e), "none" !== n.style.display ? (n.style.display = "none", t = document.createElement("span"), t.className = "ellipsis", t.innerHTML = " &hellip; ", n.parentNode.insertBefore(t, n), e.innerHTML = "+") : void 0 }, e.toggle = function(e, t) { var n, r, l, o, i, s; if(null == t && (t = {}), l = this.collapseTarget(e), n = "none" === l.style.display ? "expand" : "collapse", t.recursive_collapser) { for(r = e.parentNode.getElementsByClassName("collapser"), s = [], o = 0, i = r.length; i > o; o++) e = r[o], s.push(this[n](e)); return s } return this[n](e) }, e.collapseTarget = function(e) { var t, n; return n = e.parentNode.getElementsByClassName("collapsible"), n.length ? t = n[0] : void 0 }, e }(), t = e, l = { collapse: function(e) { return "-" === e.innerHTML ? n.collapse(e) : void 0 }, expand: function(e) { return "+" === e.innerHTML ? n.expand(e) : void 0 }, toggle: function(e) { return n.toggle(e) } }, t.fn.JSONView = function() { var e, o, i, s, a, p, c; return e = arguments, null != l[e[0]] ? (a = e[0], this.each(function() { var n, r; return n = t(this), null != e[1] ? (r = e[1], n.find(".jsonview .collapsible.level" + r).siblings(".collapser").each(function() { return l[a](this) })) : n.find(".jsonview > ul > li .collapsible").siblings(".collapser").each(function() { return l[a](this) }) })) : (s = e[0], p = e[1] || {}, o = { collapsed: !1, nl2br: !1, recursive_collapser: !1, escape: !0, strict: !1 }, p = t.extend(o, p), i = new r(p), "[object String]" === Object.prototype.toString.call(s) && (s = JSON.parse(s)), c = i.jsonToHTML(s), this.each(function() { var e, r, l, o, i, s; for(e = t(this), e.html(c), l = e[0].getElementsByClassName("collapsible"), s = [], o = 0, i = l.length; i > o; o++) r = l[o], "LI" === r.parentNode.nodeName ? s.push(n.bindEvent(r.parentNode, p)) : s.push(void 0); return s })) } }($);
+        function e() {} return e.bindEvent = function(e, t) { var n; return e.firstChild.addEventListener("click", function(e) { return function(n) { return e.toggle(n.target.parentNode.firstChild, t) } }(this)), n = document.createElement("div"), n.className = "collapser", n.innerHTML = t.collapsed ? "+" : "-", n.addEventListener("click", function(e) { return function(n) { return e.toggle(n.target, t) } }(this)), e.insertBefore(n, e.firstChild), t.collapsed ? this.collapse(n) : void 0 }, e.expand = function(e) { var t, n; return n = this.collapseTarget(e), "" !== n.style.display ? (t = n.parentNode.getElementsByClassName("ellipsis")[0], n.parentNode.removeChild(t), n.style.display = "", e.innerHTML = "-") : void 0 }, e.collapse = function(e) { var t, n; return n = this.collapseTarget(e), "none" !== n.style.display ? (n.style.display = "none", t = document.createElement("span"), t.className = "ellipsis", t.innerHTML = " &hellip; ", n.parentNode.insertBefore(t, n), e.innerHTML = "+") : void 0 }, e.toggle = function(e, t) { var n, r, l, o, i, s; if(null == t && (t = {}), l = this.collapseTarget(e), n = "none" === l.style.display ? "expand" : "collapse", t.recursive_collapser) { for(r = e.parentNode.getElementsByClassName("collapser"), s = [], o = 0, i = r.length; i > o; o++) e = r[o], s.push(this[n](e)); return s } return this[n](e) }, e.collapseTarget = function(e) { var t, n; return n = e.parentNode.getElementsByClassName("collapsible"), n.length ? t = n[0] : void 0 }, e }(), t = e, l = { collapse: function(e) { return "-" === e.innerHTML ? n.collapse(e) : void 0 }, expand: function(e) { return "+" === e.innerHTML ? n.expand(e) : void 0 }, toggle: function(e) { return n.toggle(e) } }, t.fn.JSONView = function() { var e, o, i, s, a, p, c; return e = arguments, null != l[e[0]] ? (a = e[0], this.each(function() { var n, r; return n = t(this), null != e[1] ? (r = e[1], n.find(".jsonview .collapsible.level" + r).siblings(".collapser").each(function() { return l[a](this) })) : n.find(".jsonview > ul > li .collapsible").siblings(".collapser").each(function() { return l[a](this) }) })) : (s = e[0], p = e[1] || {}, o = { collapsed: !1, nl2br: !1, recursive_collapser: !1, escape: !0, strict: !1 }, p = t.extend(o, p), i = new r(p), "[object String]" === Object.prototype.toString.call(s) && (s = JSON.parse(s)), c = i.jsonToHTML(s), this.each(function() { var e, r, l, o, i, s; for(e = t(this), e.html(c), l = e[0].getElementsByClassName("collapsible"), s = [], o = 0, i = l.length; i > o; o++) r = l[o], "LI" === r.parentNode.nodeName ? s.push(n.bindEvent(r.parentNode, p)) : s.push(void 0); return s })) } }(jQuery);
     }
-
-
-	// install 完毕
-	AjaxWatcher.installed = true
-}
-// 同样，Vue 作为全局变量时自动 install
-if (typeof window !== 'undefined' && window.Vue) {
-	window.Vue.use(AjaxWatcher)
-}
-export default AjaxWatcher
+    return window.ajaxWatcher = ajaxWatcher;
+})(window, document);
