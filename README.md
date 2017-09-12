@@ -31,7 +31,7 @@ ajaxWatcher.open({ //可选参数
 ![图片2](img/console_img_2.PNG)
 ### API
 * ``` ajaxWatcher.close(); ``` 关闭调试
-vue-plugin的API
+#### vue-plugin的API
 * ``` ajaxWatcher.get(url:string, [data:object|string]).then(successCallback:function).catch(errorCallback:function) ```发送get请求
 * ``` ajaxWatcher.post(url:string, [data:object|string]).then(successCallback:function).catch(errorCallback:function) ```发送post请求
 * ``` ajaxWatcher.all(promiseArray:array) ```
