@@ -12,10 +12,29 @@ ajaxWatcher.open({ //可选参数
     autoShow: true //是否自动显示
 });
 ```
+### 如果你是vue-cli启动的项目，可以如下使用
+```javascript
+import ajaxWatcher from './assets/ajax-watcher'
+Vue.use(ajaxWatcher)
+
+Vue.prototype.$http = ajaxWatcher.$http
+
+ajaxWatcher.open(); //默认参数
+
+ajaxWatcher.open({ //可选参数
+    keepingTime: 1000 * 60 * 5, //保持监控的持续时间
+    console: true //是否开启控制台
+    autoShow: true //是否自动显示
+});
+```
 ![图片1](img/console_img_1.PNG)
 ![图片2](img/console_img_2.PNG)
 ### API
 * ``` ajaxWatcher.close(); ``` 关闭调试
+vue-plugin的API
+* ``` ajaxWatcher.get(url:string, [data:object|string]).then(successCallback:function).catch(errorCallback:function) ```发送get请求
+* ``` ajaxWatcher.post(url:string, [data:object|string]).then(successCallback:function).catch(errorCallback:function) ```发送post请求
+* ``` ajaxWatcher.all(promiseArray:array) ```
 
 ## Q&A
 #### Q: 这个调试工具适用于什么场景
