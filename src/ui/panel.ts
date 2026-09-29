@@ -4,6 +4,7 @@
  */
 
 import type { NetworkRequest, AjaxWatcherOptions } from '../core/types';
+import type { ConsoleEntry } from '../core/console-capture';
 import { renderJson, tryParseJson } from './json-viewer';
 import { injectStyles, removeStyles } from './styles';
 
@@ -14,6 +15,7 @@ const ICON_EMPTY = `<svg viewBox="0 0 24 24"><path d="M20 13H4c-.55 0-1 .45-1 1v
 export interface PanelOptions {
   panelPosition: AjaxWatcherOptions['panelPosition'];
   triggerPosition: AjaxWatcherOptions['triggerPosition'];
+  consoleEnabled?: boolean;
   onClear?: () => void;
 }
 
@@ -21,11 +23,14 @@ export class Panel {
   private trigger: HTMLButtonElement | null = null;
   private panel: HTMLDivElement | null = null;
   private listContainer: HTMLDivElement | null = null;
+  private consoleContainer: HTMLDivElement | null = null;
   private badge: HTMLSpanElement | null = null;
   private requests: Map<string, NetworkRequest> = new Map();
   private expandedItems: Set<string> = new Set();
+  private logCount = 0;
   private options: PanelOptions;
   private visible = false;
+  private activeTab: 'network' | 'console' = 'network';
 
   constructor(options: PanelOptions) {
     this.options = options;
@@ -43,7 +48,9 @@ export class Panel {
     this.trigger = null;
     this.panel = null;
     this.listContainer = null;
+    this.consoleContainer = null;
     this.badge = null;
+    this.logCount = 0;
     removeStyles();
   }
 
@@ -84,6 +91,34 @@ export class Panel {
     this.expandedItems.clear();
     this.renderList();
     this.updateBadge();
+  }
+
+  appendLog(entry: ConsoleEntry): void {
+    if (!this.consoleContainer) return;
+
+    this.consoleContainer.querySelector('.ajax-watcher-empty')?.remove();
+
+    const row = document.createElement('div');
+    row.className = `ajax-watcher-log ajax-watcher-log-${entry.level}`;
+
+    const level = document.createElement('span');
+    level.className = 'ajax-watcher-log-level';
+    level.textContent = entry.level;
+
+    const text = document.createElement('span');
+    text.className = 'ajax-watcher-log-text';
+    text.textContent = entry.text;
+
+    row.append(level, text);
+    this.consoleContainer.appendChild(row);
+    this.logCount += 1;
+
+    while (this.logCount > 200 && this.consoleContainer.firstElementChild) {
+      this.consoleContainer.firstElementChild.remove();
+      this.logCount -= 1;
+    }
+
+    this.consoleContainer.scrollTop = this.consoleContainer.scrollHeight;
   }
 
   private createTrigger(): void {
@@ -130,20 +165,76 @@ export class Panel {
         if (action === 'close') {
           this.hide();
         } else if (action === 'clear') {
-          this.clearRequests();
-          this.options.onClear?.();
+          this.clearActiveView();
         }
+      }
+    });
+
+    const tabs = document.createElement('div');
+    tabs.className = 'ajax-watcher-tabs';
+    tabs.setAttribute('role', 'tablist');
+    tabs.innerHTML = `
+      <button type="button" class="ajax-watcher-tab active" data-tab="network" role="tab" aria-selected="true">网络</button>
+      <button type="button" class="ajax-watcher-tab" data-tab="console" role="tab" aria-selected="false">控制台</button>
+    `;
+    tabs.addEventListener('click', (e) => {
+      const tab = (e.target as HTMLElement).closest('[data-tab]') as HTMLElement | null;
+      const name = tab?.getAttribute('data-tab');
+      if (name === 'network' || name === 'console') {
+        this.showTab(name);
       }
     });
 
     this.listContainer = document.createElement('div');
     this.listContainer.className = 'ajax-watcher-list';
+    this.listContainer.setAttribute('role', 'tabpanel');
 
-    this.panel.appendChild(header);
-    this.panel.appendChild(this.listContainer);
+    this.consoleContainer = document.createElement('div');
+    this.consoleContainer.className = 'ajax-watcher-console hidden';
+    this.consoleContainer.setAttribute('role', 'tabpanel');
+
+    this.panel.append(header, tabs, this.listContainer, this.consoleContainer);
 
     document.body.appendChild(this.panel);
     this.renderList();
+    this.renderConsoleEmpty();
+  }
+
+  private showTab(tab: 'network' | 'console'): void {
+    this.activeTab = tab;
+    this.panel?.querySelectorAll<HTMLElement>('[data-tab]').forEach((button) => {
+      const selected = button.getAttribute('data-tab') === tab;
+      button.classList.toggle('active', selected);
+      button.setAttribute('aria-selected', selected ? 'true' : 'false');
+    });
+    this.listContainer?.classList.toggle('hidden', tab !== 'network');
+    this.consoleContainer?.classList.toggle('hidden', tab !== 'console');
+    const title = this.panel?.querySelector('.ajax-watcher-title span');
+    if (title) {
+      title.textContent = tab === 'console' ? 'Console' : 'Network Requests';
+    }
+  }
+
+  private clearActiveView(): void {
+    if (this.activeTab === 'console') {
+      this.logCount = 0;
+      this.renderConsoleEmpty();
+      return;
+    }
+    this.clearRequests();
+    this.options.onClear?.();
+  }
+
+  private renderConsoleEmpty(): void {
+    if (!this.consoleContainer) return;
+    const message = this.options.consoleEnabled
+      ? '暂无日志。console.log / info / warn / error 会显示在这里'
+      : '未开启控制台。调用 open({ console: true }) 后才会收集日志';
+    this.consoleContainer.innerHTML = `
+      <div class="ajax-watcher-empty">
+        <div>${message}</div>
+      </div>
+    `;
   }
 
   private renderList(): void {

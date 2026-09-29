@@ -106,6 +106,89 @@ export const styles = `
   border-bottom: 1px solid #2a2a4a;
 }
 
+.ajax-watcher-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 8px 12px 0;
+  background: #16213e;
+}
+
+.ajax-watcher-tab {
+  border: none;
+  background: transparent;
+  color: #9aa0c3;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: 8px 8px 0 0;
+  cursor: pointer;
+}
+
+.ajax-watcher-tab.active {
+  background: #1a1a2e;
+  color: #fff;
+}
+
+.ajax-watcher-console {
+  display: block;
+  flex: 1;
+  overflow: auto;
+  min-height: 160px;
+  max-height: 50vh;
+  width: 380px;
+  padding: 8px 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(168, 176, 214, 0.55) transparent;
+}
+
+.ajax-watcher-list.hidden,
+.ajax-watcher-console.hidden {
+  display: none;
+}
+
+.ajax-watcher-log {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 6px 12px;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+  font-size: 12px;
+  line-height: 1.45;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.ajax-watcher-log-level {
+  flex: none;
+  width: 42px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding-top: 2px;
+}
+
+.ajax-watcher-log-text {
+  flex: 1;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.ajax-watcher-log-log .ajax-watcher-log-level { color: #dfe6e9; }
+.ajax-watcher-log-info .ajax-watcher-log-level { color: #74b9ff; }
+.ajax-watcher-log-debug .ajax-watcher-log-level { color: #a29bfe; }
+.ajax-watcher-log-warn .ajax-watcher-log-level,
+.ajax-watcher-log-warn .ajax-watcher-log-text { color: #ffeaa7; }
+.ajax-watcher-log-error .ajax-watcher-log-level,
+.ajax-watcher-log-error .ajax-watcher-log-text { color: #ff7675; }
+
+@media (max-width: 600px) {
+  .ajax-watcher-console {
+    width: 100%;
+  }
+}
+
 .ajax-watcher-title {
   font-weight: 600;
   font-size: 15px;
@@ -175,17 +258,20 @@ export const styles = `
 }
 
 .ajax-watcher-list::-webkit-scrollbar,
+.ajax-watcher-console::-webkit-scrollbar,
 .ajax-watcher-detail-content::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 .ajax-watcher-list::-webkit-scrollbar-track,
+.ajax-watcher-console::-webkit-scrollbar-track,
 .ajax-watcher-detail-content::-webkit-scrollbar-track {
   background: transparent;
 }
 
 .ajax-watcher-list::-webkit-scrollbar-thumb,
+.ajax-watcher-console::-webkit-scrollbar-thumb,
 .ajax-watcher-detail-content::-webkit-scrollbar-thumb {
   background: rgba(168, 176, 214, 0.45);
   border-radius: 999px;
@@ -194,6 +280,7 @@ export const styles = `
 }
 
 .ajax-watcher-list::-webkit-scrollbar-thumb:hover,
+.ajax-watcher-console::-webkit-scrollbar-thumb:hover,
 .ajax-watcher-detail-content::-webkit-scrollbar-thumb:hover {
   background: rgba(168, 176, 214, 0.75);
   background-clip: padding-box;

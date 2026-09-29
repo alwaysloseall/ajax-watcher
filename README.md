@@ -25,6 +25,9 @@ A lightweight network request debugger designed for mobile/WeChat and other hard
 </p>
 <p>
   <img src="img/demo-detail.png" alt="展开后的请求详情与 JSON" width="420" />
+  <img src="img/demo-console.png" alt="页面内控制台日志" width="420" />
+</p>
+<p>
   <img src="img/demo-mobile.png" alt="移动端调试面板" width="220" />
 </p>
 
@@ -34,7 +37,7 @@ A lightweight network request debugger designed for mobile/WeChat and other hard
 - 📱 **移动端优化** - 专为手机浏览器、微信内置浏览器等环境设计
 - ⏱️ **时限调试** - 设置调试持续时间，自动关闭防止泄露
 - 💾 **状态持久化** - 刷新页面自动恢复调试状态
-- 🎨 **现代化 UI** - 美观的浮动面板，支持 JSON 折叠展示
+- 🎨 **现代化 UI** - 浮动面板里可以看请求详情，也可以看页面内控制台日志，JSON 支持折叠
 - 📦 **零依赖** - 不依赖 jQuery 或其他库
 - ⚛️ **React 18+ 支持** - Hooks 和 Provider 模式
 - 🔌 **Vue 3 支持** - 可选的 Vue 插件适配器
@@ -197,7 +200,7 @@ function toggleDebug() {
 |------|------|--------|------|
 | `keepingTime` | `number` | `300000` (5分钟) | 调试持续时间（毫秒） |
 | `autoShow` | `boolean` | `true` | 是否自动显示调试面板 |
-| `console` | `boolean` | `true` | 是否在控制台输出日志 |
+| `console` | `boolean` | `true` | 是否打开页面内控制台。为 true 时，`console.log` / `info` / `warn` / `error` / `debug` 以及未捕获异常会显示在面板的「控制台」页，并继续输出到浏览器控制台 |
 | `interceptXHR` | `boolean` | `true` | 是否拦截 XMLHttpRequest |
 | `interceptFetch` | `boolean` | `true` | 是否拦截 fetch API |
 | `maxRecords` | `number` | `100` | 最大记录请求数 |

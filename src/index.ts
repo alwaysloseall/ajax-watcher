@@ -30,6 +30,7 @@ import type {
 import { DEFAULT_OPTIONS } from './core/types';
 import { saveConfig, clearConfig, tryRestoreConfig, getRemainingTime } from './core/storage';
 import { interceptXHR, interceptFetch, restoreAll } from './core/interceptor';
+import { captureConsole } from './core/console-capture';
 import { Panel } from './ui/panel';
 
 export type { AjaxWatcherOptions, AjaxWatcherInstance, NetworkRequest } from './core/types';
@@ -45,6 +46,7 @@ class AjaxWatcher implements AjaxWatcherInstance {
   private requestSnapshot: NetworkRequest[] = [];
   private cleanupXHR: (() => void) | null = null;
   private cleanupFetch: (() => void) | null = null;
+  private cleanupConsole: (() => void) | null = null;
   private autoCloseTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
@@ -70,6 +72,7 @@ class AjaxWatcher implements AjaxWatcherInstance {
 
     this.setupInterceptors();
     this.setupPanel();
+    this.installConsole();
 
     if (this.options.autoShow) {
       this.show();
@@ -100,8 +103,10 @@ class AjaxWatcher implements AjaxWatcherInstance {
 
     this.cleanupXHR?.();
     this.cleanupFetch?.();
+    this.cleanupConsole?.();
     this.cleanupXHR = null;
     this.cleanupFetch = null;
+    this.cleanupConsole = null;
 
     this.panel?.unmount();
     this.panel = null;
@@ -183,6 +188,7 @@ class AjaxWatcher implements AjaxWatcherInstance {
       this.active = true;
       this.setupInterceptors();
       this.setupPanel();
+      this.installConsole();
 
       if (this.options.autoShow) {
         this.show();
@@ -241,9 +247,17 @@ class AjaxWatcher implements AjaxWatcherInstance {
     this.panel = new Panel({
       panelPosition: this.options.panelPosition,
       triggerPosition: this.options.triggerPosition,
+      consoleEnabled: this.options.console,
       onClear: () => this.clearRequests(),
     });
     this.panel.mount();
+  }
+
+  private installConsole(): void {
+    if (!this.options.console) return;
+    this.cleanupConsole = captureConsole((entry) => {
+      this.panel?.appendLog(entry);
+    });
   }
 
   private scheduleAutoClose(delay: number): void {
