@@ -82,16 +82,14 @@ export const AjaxWatcherProvider: FC<AjaxWatcherProviderProps> = ({
   useEffect(() => {
     if (autoOpen && !ajaxWatcher.isActive()) {
       ajaxWatcher.open(options);
-      setIsActive(true);
     }
 
-    const unsubscribe = ajaxWatcher.on('request', () => {
-      setRequests([...ajaxWatcher.getRequests()]);
-    });
-
-    return () => {
-      unsubscribe();
+    const sync = () => {
+      setIsActive(ajaxWatcher.isActive());
+      setRequests(ajaxWatcher.getRequests());
     };
+    sync();
+    return ajaxWatcher.subscribe(sync);
   }, [autoOpen]);
 
   const open = useCallback((opts?: AjaxWatcherOptions) => {
@@ -170,26 +168,13 @@ export function useAjaxWatcher(options?: AjaxWatcherOptions): AjaxWatcherContext
   const [requests, setRequests] = useState<NetworkRequest[]>(() => ajaxWatcher.getRequests());
 
   useEffect(() => {
-    const unsubscribe = ajaxWatcher.on('request', () => {
-      setRequests([...ajaxWatcher.getRequests()]);
+    const sync = () => {
       setIsActive(ajaxWatcher.isActive());
-    });
-
-    const checkInterval = setInterval(() => {
-      const active = ajaxWatcher.isActive();
-      if (active !== isActive) {
-        setIsActive(active);
-        if (!active) {
-          setRequests([]);
-        }
-      }
-    }, 1000);
-
-    return () => {
-      unsubscribe();
-      clearInterval(checkInterval);
+      setRequests(ajaxWatcher.getRequests());
     };
-  }, [isActive]);
+    sync();
+    return ajaxWatcher.subscribe(sync);
+  }, []);
 
   const open = useCallback((opts?: AjaxWatcherOptions) => {
     ajaxWatcher.open({ ...options, ...opts });
@@ -244,32 +229,22 @@ export function useAjaxWatcher(options?: AjaxWatcherOptions): AjaxWatcherContext
  * ```
  */
 export function useNetworkRequests(): NetworkRequest[] {
-  const subscribe = useCallback((callback: () => void) => {
-    return ajaxWatcher.on('request', callback);
-  }, []);
-
-  const getSnapshot = useCallback(() => {
-    return ajaxWatcher.getRequests();
-  }, []);
-
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  return useSyncExternalStore(
+    (onStoreChange) => ajaxWatcher.subscribe(onStoreChange),
+    () => ajaxWatcher.getRequests(),
+    () => ajaxWatcher.getRequests()
+  );
 }
 
 /**
  * 监听调试状态变化
  */
 export function useIsActive(): boolean {
-  const [isActive, setIsActive] = useState(() => ajaxWatcher.isActive());
-
-  useEffect(() => {
-    const checkInterval = setInterval(() => {
-      setIsActive(ajaxWatcher.isActive());
-    }, 500);
-
-    return () => clearInterval(checkInterval);
-  }, []);
-
-  return isActive;
+  return useSyncExternalStore(
+    (onStoreChange) => ajaxWatcher.subscribe(onStoreChange),
+    () => ajaxWatcher.isActive(),
+    () => ajaxWatcher.isActive()
+  );
 }
 
 export { ajaxWatcher };

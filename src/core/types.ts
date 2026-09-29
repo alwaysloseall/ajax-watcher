@@ -136,6 +136,11 @@ export interface AjaxWatcherInstance {
    * 监听请求事件
    */
   on(event: 'request', callback: (request: NetworkRequest) => void): () => void;
+
+  /**
+   * 订阅请求列表或调试开关变化。回调不带参数，读取最新状态请调用 getRequests / isActive。
+   */
+  subscribe(listener: () => void): () => void;
 }
 
 export type EventCallback = (request: NetworkRequest) => void;

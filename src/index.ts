@@ -41,6 +41,8 @@ class AjaxWatcher implements AjaxWatcherInstance {
   private requests: NetworkRequest[] = [];
   private requestMap: Map<string, NetworkRequest> = new Map();
   private listeners: Set<EventCallback> = new Set();
+  private changeListeners: Set<() => void> = new Set();
+  private requestSnapshot: NetworkRequest[] = [];
   private cleanupXHR: (() => void) | null = null;
   private cleanupFetch: (() => void) | null = null;
   private autoCloseTimer: ReturnType<typeof setTimeout> | null = null;
@@ -74,6 +76,7 @@ class AjaxWatcher implements AjaxWatcherInstance {
     }
 
     this.scheduleAutoClose(this.options.keepingTime);
+    this.emitChange();
 
     if (this.options.console) {
       console.log(
@@ -102,6 +105,7 @@ class AjaxWatcher implements AjaxWatcherInstance {
 
     this.panel?.unmount();
     this.panel = null;
+    this.emitChange();
 
     if (this.options.console) {
       console.log('[ajax-watcher] 调试已关闭');
@@ -109,12 +113,13 @@ class AjaxWatcher implements AjaxWatcherInstance {
   }
 
   getRequests(): NetworkRequest[] {
-    return [...this.requests];
+    return this.requestSnapshot;
   }
 
   clearRequests(): void {
     this.requests = [];
     this.requestMap.clear();
+    this.publishRequests();
   }
 
   isActive(): boolean {
@@ -138,7 +143,9 @@ class AjaxWatcher implements AjaxWatcherInstance {
     restoreAll();
     this.requests = [];
     this.requestMap.clear();
+    this.requestSnapshot = [];
     this.listeners.clear();
+    this.changeListeners.clear();
   }
 
   on(event: 'request', callback: EventCallback): () => void {
@@ -147,6 +154,20 @@ class AjaxWatcher implements AjaxWatcherInstance {
       return () => this.listeners.delete(callback);
     }
     return () => {};
+  }
+
+  subscribe(listener: () => void): () => void {
+    this.changeListeners.add(listener);
+    return () => this.changeListeners.delete(listener);
+  }
+
+  private publishRequests(): void {
+    this.requestSnapshot = this.requests.slice();
+    this.emitChange();
+  }
+
+  private emitChange(): void {
+    this.changeListeners.forEach((listener) => listener());
   }
 
   private tryAutoRestore(): void {
@@ -169,6 +190,7 @@ class AjaxWatcher implements AjaxWatcherInstance {
 
       const remaining = getRemainingTime(config);
       this.scheduleAutoClose(remaining);
+      this.emitChange();
 
       if (this.options.console) {
         console.log(
@@ -195,6 +217,7 @@ class AjaxWatcher implements AjaxWatcherInstance {
         }
       }
 
+      this.publishRequests();
       this.panel?.updateRequest(request);
       this.options.onRequest?.(request);
       this.listeners.forEach((cb) => cb(request));

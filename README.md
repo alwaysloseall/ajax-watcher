@@ -9,7 +9,9 @@ A lightweight network request debugger designed for mobile/WeChat and other hard
 
 ## 🌐 在线演示 / Live Demo
 
-**[👉 GitHub Pages Demo](https://alwaysloseall.github.io/ajax-watcher/)** | **[⚡ StackBlitz](https://stackblitz.com/github/alwaysloseall/ajax-watcher/tree/refactor/modern-v2?file=demo%2Findex.html)**
+**[⚡ StackBlitz 在线试用](https://stackblitz.com/github/alwaysloseall/ajax-watcher/tree/refactor/modern-v2?file=demo%2Findex.html)**
+
+当前仓库的 GitHub Pages 只允许从 `master` 部署，所以 [现有 Pages 地址](https://alwaysloseall.github.io/ajax-watcher/) 仍是旧版页面。v2 演示会在本分支合并进 `master` 后由 Actions 发布；在此之前用上面的 StackBlitz 即可打开演示。
 
 ### 界面预览
 
@@ -28,7 +30,7 @@ A lightweight network request debugger designed for mobile/WeChat and other hard
 
 ## ✨ 特性 / Features
 
-- 🔍 **同时拦截 XHR 和 Fetch** - 完整覆盖现代 Web 应用的网络请求
+- 🔍 **同时拦截 XHR 和 Fetch** - 覆盖页面脚本发起的这两类请求。WebSocket、`sendBeacon` 和 Service Worker 不在范围内
 - 📱 **移动端优化** - 专为手机浏览器、微信内置浏览器等环境设计
 - ⏱️ **时限调试** - 设置调试持续时间，自动关闭防止泄露
 - 💾 **状态持久化** - 刷新页面自动恢复调试状态
@@ -343,7 +345,7 @@ npm run build:demo
 
 ### 部署 Demo 到 GitHub Pages
 
-Demo 会通过 GitHub Actions 自动部署到 GitHub Pages。也可以手动部署：
+`.github/workflows/deploy-demo.yml` 会在推送到 `master` 后构建 `demo/dist` 并发布。这个仓库的 Pages 环境目前只接受 `master` 上的部署，所以功能分支上的工作流会构建成功、发布失败。合并后也可以在本地执行：
 
 ```bash
 npm run deploy
@@ -382,7 +384,7 @@ ajaxWatcher.on('request', (request) => {
 1. **调试时间限制** - `keepingTime` 设计用于防止调试状态意外暴露在生产环境
 2. **存储持久化** - 调试配置保存在 `localStorage`，键名为 `ajax-watcher`
 3. **请求数量限制** - 默认最多保留 100 条请求记录，防止内存溢出
-4. **Service Worker** - 目前不拦截 Service Worker 发起的请求
+4. **未拦截的通道** - 不拦截 WebSocket、`navigator.sendBeacon`，以及 Service Worker 内部发起的请求
 
 ## 🤝 贡献 / Contributing
 
