@@ -9,7 +9,7 @@ A lightweight network request debugger designed for mobile/WeChat and other hard
 
 ## 🌐 在线演示 / Live Demo
 
-**[👉 点击体验在线 Demo](https://alwaysloseall.github.io/ajax-watcher/)**
+**[👉 GitHub Pages Demo](https://alwaysloseall.github.io/ajax-watcher/)** | **[⚡ StackBlitz](https://stackblitz.com/github/alwaysloseall/ajax-watcher/tree/refactor/modern-v2?file=demo%2Findex.html)**
 
 ![Demo Screenshot](img/console_img_1.PNG)
 
