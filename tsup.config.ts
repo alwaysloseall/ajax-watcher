@@ -5,6 +5,7 @@ export default defineConfig([
     entry: {
       index: 'src/index.ts',
       vue: 'src/adapters/vue.ts',
+      react: 'src/adapters/react.tsx',
     },
     format: ['esm', 'cjs'],
     dts: true,
@@ -13,7 +14,7 @@ export default defineConfig([
     clean: true,
     minify: false,
     treeshake: true,
-    external: ['vue'],
+    external: ['vue', 'react', 'react/jsx-runtime'],
   },
   {
     entry: { 'ajax-watcher': 'src/index.ts' },

@@ -7,6 +7,10 @@ A lightweight network request debugger designed for mobile/WeChat and other hard
 [![npm version](https://img.shields.io/npm/v/ajax-watcher.svg)](https://www.npmjs.com/package/ajax-watcher)
 [![license](https://img.shields.io/npm/l/ajax-watcher.svg)](https://github.com/AJLoveChina/ajax-watcher/blob/master/LICENSE)
 
+## 🌐 在线演示 / Live Demo
+
+**[👉 点击体验在线 Demo](https://alwaysloseall.github.io/ajax-watcher/)**
+
 ![Demo Screenshot](img/console_img_1.PNG)
 
 ## ✨ 特性 / Features
@@ -17,6 +21,7 @@ A lightweight network request debugger designed for mobile/WeChat and other hard
 - 💾 **状态持久化** - 刷新页面自动恢复调试状态
 - 🎨 **现代化 UI** - 美观的浮动面板，支持 JSON 折叠展示
 - 📦 **零依赖** - 不依赖 jQuery 或其他库
+- ⚛️ **React 18+ 支持** - Hooks 和 Provider 模式
 - 🔌 **Vue 3 支持** - 可选的 Vue 插件适配器
 - 📝 **TypeScript** - 完整的类型定义
 
@@ -60,6 +65,74 @@ ajaxWatcher.open({
 
 // 手动关闭
 ajaxWatcher.close();
+```
+
+### React 18+
+
+Ajax Watcher 提供 React Hooks 和 Provider 两种使用方式。
+
+#### 方式一：直接使用 Hook（推荐）
+
+```tsx
+import { useAjaxWatcher } from 'ajax-watcher/react';
+
+function DebugPanel() {
+  const { isActive, open, close, requests } = useAjaxWatcher();
+
+  return (
+    <div>
+      <button onClick={() => isActive ? close() : open({ keepingTime: 300000 })}>
+        {isActive ? '关闭调试' : '开启调试'}
+      </button>
+      <span>已捕获 {requests.length} 个请求</span>
+    </div>
+  );
+}
+```
+
+#### 方式二：使用 Provider
+
+```tsx
+import { AjaxWatcherProvider, useAjaxWatcherContext } from 'ajax-watcher/react';
+
+// 在应用根部包裹 Provider
+function App() {
+  return (
+    <AjaxWatcherProvider autoOpen keepingTime={10 * 60 * 1000}>
+      <YourApp />
+    </AjaxWatcherProvider>
+  );
+}
+
+// 在子组件中使用 Context
+function ChildComponent() {
+  const { isActive, toggle, requests } = useAjaxWatcherContext();
+  // ...
+}
+```
+
+#### 其他 React Hooks
+
+```tsx
+import { useNetworkRequests, useIsActive } from 'ajax-watcher/react';
+
+// 订阅请求列表（使用 useSyncExternalStore 高效更新）
+function RequestList() {
+  const requests = useNetworkRequests();
+  return (
+    <ul>
+      {requests.map(req => (
+        <li key={req.id}>{req.method} {req.url} → {req.status}</li>
+      ))}
+    </ul>
+  );
+}
+
+// 监听调试状态
+function StatusIndicator() {
+  const isActive = useIsActive();
+  return <span>{isActive ? '🟢 调试中' : '⚪ 未激活'}</span>;
+}
 ```
 
 ### Vue 3
@@ -155,6 +228,42 @@ unsubscribe();
 
 销毁实例，恢复原始的 XHR 和 fetch。
 
+## ⚛️ React API
+
+### Hooks
+
+| Hook | 描述 |
+|------|------|
+| `useAjaxWatcher(options?)` | 主 Hook，返回完整控制接口 |
+| `useAjaxWatcherContext()` | 从 Provider Context 获取（需在 Provider 内） |
+| `useNetworkRequests()` | 订阅请求列表（useSyncExternalStore） |
+| `useIsActive()` | 监听调试状态 |
+
+### `useAjaxWatcher` 返回值
+
+```typescript
+interface AjaxWatcherContextValue {
+  watcher: AjaxWatcherInstance;  // 原始实例
+  isActive: boolean;              // 是否激活
+  requests: NetworkRequest[];     // 请求列表
+  open: (options?) => void;       // 开启调试
+  close: () => void;              // 关闭调试
+  show: () => void;               // 显示面板
+  hide: () => void;               // 隐藏面板
+  toggle: () => void;             // 切换面板
+  clearRequests: () => void;      // 清除记录
+}
+```
+
+### `AjaxWatcherProvider` Props
+
+```typescript
+interface AjaxWatcherProviderProps extends AjaxWatcherOptions {
+  children: ReactNode;
+  autoOpen?: boolean;  // 挂载时自动开启，默认 false
+}
+```
+
 ## 🔄 从 v1.x 迁移 / Migration from v1.x
 
 ### 主要变化
@@ -163,6 +272,7 @@ unsubscribe();
 2. **新增 Fetch 拦截** - 同时支持 XHR 和 Fetch API
 3. **TypeScript 支持** - 完整的类型定义
 4. **模块化导出** - 支持 ESM、CJS 和 IIFE 格式
+5. **React 支持** - 新增 `ajax-watcher/react` 导出
 
 ### API 对照
 
@@ -211,8 +321,19 @@ npm run dev
 # 运行测试
 npm test
 
-# 构建
+# 构建库
 npm run build
+
+# 构建 Demo（用于部署）
+npm run build:demo
+```
+
+### 部署 Demo 到 GitHub Pages
+
+Demo 会通过 GitHub Actions 自动部署到 GitHub Pages。也可以手动部署：
+
+```bash
+npm run deploy
 ```
 
 ## 💡 使用场景 / Use Cases

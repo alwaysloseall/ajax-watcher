@@ -26,6 +26,16 @@
         "types": "./dist/vue.d.cts",
         "default": "./dist/vue.cjs"
       }
+    },
+    "./react": {
+      "import": {
+        "types": "./dist/react.d.ts",
+        "default": "./dist/react.js"
+      },
+      "require": {
+        "types": "./dist/react.d.cts",
+        "default": "./dist/react.cjs"
+      }
     }
   },
   "files": [
@@ -33,12 +43,15 @@
   ],
   "scripts": {
     "build": "tsup",
+    "build:demo": "vite build demo --base=/ajax-watcher/",
     "dev": "vite demo",
+    "preview": "vite preview demo",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext .ts",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "deploy": "npm run build:demo && gh-pages -d demo/dist"
   },
   "keywords": [
     "ajax",
@@ -49,7 +62,9 @@
     "xhr",
     "fetch",
     "typescript",
-    "devtools"
+    "devtools",
+    "react",
+    "vue"
   ],
   "author": "vldh",
   "license": "MIT",
@@ -57,19 +72,29 @@
     "type": "git",
     "url": "https://github.com/AJLoveChina/ajax-watcher.git"
   },
+  "homepage": "https://ajlovechina.github.io/ajax-watcher/",
   "devDependencies": {
     "@types/node": "^20.10.0",
+    "@types/react": "^18.2.45",
+    "@types/react-dom": "^18.2.18",
     "eslint": "^8.55.0",
+    "gh-pages": "^6.1.0",
+    "jsdom": "^23.0.1",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
     "tsup": "^8.0.1",
     "typescript": "^5.3.2",
     "vite": "^5.0.6",
-    "vitest": "^1.0.4",
-    "jsdom": "^23.0.1"
+    "vitest": "^1.0.4"
   },
   "peerDependencies": {
+    "react": ">=18.0.0",
     "vue": ">=3.0.0"
   },
   "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
     "vue": {
       "optional": true
     }
