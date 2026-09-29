@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Ajax Watcher Demo</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(168, 176, 214, 0.45) #12122a;
+    }
+
+    html::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    html::-webkit-scrollbar-track {
+      background: #12122a;
+    }
+
+    html::-webkit-scrollbar-thumb {
+      background: rgba(168, 176, 214, 0.45);
+      border-radius: 999px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      color: #e8e8e8;
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      text-align: center;
+      color: #667eea;
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #888;
+      font-size: 14px;
+      margin-bottom: 32px;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-title::before {
+      content: '';
+      display: block;
+      width: 4px;
+      height: 18px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      border-radius: 2px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 13px;
+      color: #aaa;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid #333;
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.3);
+      color: #fff;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      border-color: #667eea;
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .checkbox-group input {
+      width: 18px;
+      height: 18px;
+    }
+
+    .checkbox-group label {
+      margin: 0;
+      cursor: pointer;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      flex: 1;
+      min-width: 120px;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.1);
+      color: #ccc;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .btn-danger {
+      background: #d63031;
+      color: white;
+    }
+
+    .btn-success {
+      background: #00b894;
+      color: white;
+    }
+
+    .api-list {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    @media (max-width: 400px) {
+      .api-list {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .status {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .status-active {
+      background: rgba(0, 184, 148, 0.2);
+      color: #00b894;
+    }
+
+    .status-inactive {
+      background: rgba(99, 110, 114, 0.3);
+      color: #999;
+    }
+
+    .footer {
+      text-align: center;
+      color: #666;
+      font-size: 12px;
+      margin-top: 40px;
+      padding-bottom: 20px;
+    }
+
+    .footer a {
+      color: #667eea;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔍 Ajax Watcher</h1>
+    <p class="subtitle">轻量级网络请求调试工具</p>
+
+    <div class="card">
+      <div class="card-title">调试控制</div>
+      <div class="form-group">
+        <label>持续时间（分钟）</label>
+        <input type="number" id="keepingTime" value="5" min="1" max="60">
+      </div>
+      <div class="form-group">
+        <div class="checkbox-group">
+          <input type="checkbox" id="autoShow" checked>
+          <label for="autoShow">自动显示面板</label>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="checkbox-group">
+          <input type="checkbox" id="console" checked>
+          <label for="console">页面控制台</label>
+        </div>
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="openWatcher()">开启调试</button>
+        <button class="btn btn-danger" onclick="closeWatcher()">关闭调试</button>
+      </div>
+      <div style="margin-top: 12px; text-align: center;">
+        状态: <span id="status" class="status status-inactive">未激活</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">测试请求</div>
+      <div class="api-list">
+        <button class="btn btn-success" onclick="testGet()">GET 请求</button>
+        <button class="btn btn-success" onclick="testPost()">POST 请求</button>
+        <button class="btn btn-secondary" onclick="testXHR()">XHR 请求</button>
+        <button class="btn btn-secondary" onclick="testError()">错误请求</button>
+        <button class="btn btn-secondary" onclick="testDelay()">延迟请求</button>
+        <button class="btn btn-secondary" onclick="testMultiple()">批量请求</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">使用说明</div>
+      <ul style="margin: 0; padding-left: 20px; line-height: 1.8; color: #aaa;">
+        <li>点击"开启调试"后，所有网络请求将被监控</li>
+        <li>右下角浮动按钮可展开/收起调试面板</li>
+        <li>调试状态保存在 localStorage，刷新页面自动恢复</li>
+        <li>超过设定时间后自动关闭调试</li>
+        <li>点击请求条目可展开详情</li>
+      </ul>
+    </div>
+
+    <div class="footer">
+      <p>Ajax Watcher v2.0.0</p>
+      <p><a href="https://github.com/AJLoveChina/ajax-watcher" target="_blank">GitHub</a></p>
+    </div>
+  </div>
+
+  <script type="module">
+    import { ajaxWatcher } from '../src/index.ts';
+
+    window.ajaxWatcher = ajaxWatcher;
+
+    function updateStatus() {
+      const statusEl = document.getElementById('status');
+      if (ajaxWatcher.isActive()) {
+        statusEl.textContent = '调试中';
+        statusEl.className = 'status status-active';
+      } else {
+        statusEl.textContent = '未激活';
+        statusEl.className = 'status status-inactive';
+      }
+    }
+
+    window.openWatcher = function() {
+      const keepingTime = parseInt(document.getElementById('keepingTime').value) || 5;
+      const autoShow = document.getElementById('autoShow').checked;
+      const consoleOutput = document.getElementById('console').checked;
+
+      ajaxWatcher.open({
+        keepingTime: keepingTime * 60 * 1000,
+        autoShow: autoShow,
+        console: consoleOutput,
+      });
+
+      updateStatus();
+    };
+
+    window.closeWatcher = function() {
+      ajaxWatcher.close();
+      updateStatus();
+    };
+
+    window.testGet = async function() {
+      try {
+        const response = await fetch('https://jsonplaceholder.typicode.com/posts/1');
+        const data = await response.json();
+        console.log('GET Response:', data);
+      } catch (e) {
+        console.error('GET Error:', e);
+      }
+    };
+
+    window.testPost = async function() {
+      try {
+        const response = await fetch('https://jsonplaceholder.typicode.com/posts', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            title: '测试标题',
+            body: '测试内容',
+            userId: 1,
+          }),
+        });
+        const data = await response.json();
+        console.log('POST Response:', data);
+      } catch (e) {
+        console.error('POST Error:', e);
+      }
+    };
+
+    window.testXHR = function() {
+      const xhr = new XMLHttpRequest();
+      xhr.open('GET', 'https://jsonplaceholder.typicode.com/users/1');
+      xhr.setRequestHeader('X-Custom-Header', 'test-value');
+      xhr.onload = function() {
+        console.log('XHR Response:', JSON.parse(xhr.responseText));
+      };
+      xhr.onerror = function() {
+        console.error('XHR Error');
+      };
+      xhr.send();
+    };
+
+    window.testError = async function() {
+      try {
+        await fetch('https://jsonplaceholder.typicode.com/not-found-404');
+      } catch (e) {
+        console.error('Error request:', e);
+      }
+    };
+
+    window.testDelay = async function() {
+      try {
+        const response = await fetch('https://httpbin.org/delay/2');
+        const data = await response.json();
+        console.log('Delay Response:', data);
+      } catch (e) {
+        console.error('Delay Error:', e);
+      }
+    };
+
+    window.testMultiple = function() {
+      Promise.all([
+        fetch('https://jsonplaceholder.typicode.com/posts/1'),
+        fetch('https://jsonplaceholder.typicode.com/posts/2'),
+        fetch('https://jsonplaceholder.typicode.com/posts/3'),
+      ]).then(responses => {
+        console.log('Multiple requests completed');
+      });
+    };
+
+    updateStatus();
+  </script>
+</body>
+</html>
