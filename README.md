@@ -11,7 +11,20 @@ A lightweight network request debugger designed for mobile/WeChat and other hard
 
 **[👉 GitHub Pages Demo](https://alwaysloseall.github.io/ajax-watcher/)** | **[⚡ StackBlitz](https://stackblitz.com/github/alwaysloseall/ajax-watcher/tree/refactor/modern-v2?file=demo%2Findex.html)**
 
-![Demo Screenshot](img/console_img_1.PNG)
+### 界面预览
+
+开启调试后，页面上的 XHR / Fetch 会出现在右下角面板里。点开一条可以看到 URL、响应头和 JSON 响应体。窄屏下面板会铺满宽度。
+
+<p>
+  <img src="img/demo-home.png" alt="调试设置页" width="720" />
+</p>
+<p>
+  <img src="img/demo-list.png" alt="拦截到的 GET 与 POST 请求列表" width="720" />
+</p>
+<p>
+  <img src="img/demo-detail.png" alt="展开后的请求详情与 JSON" width="420" />
+  <img src="img/demo-mobile.png" alt="移动端调试面板" width="220" />
+</p>
 
 ## ✨ 特性 / Features
 
